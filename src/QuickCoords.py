@@ -87,19 +87,21 @@ class ToolScreen(QtGui.QWidget):
 
     def selectFolder(self):
         
-        self.imagePath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)+'/'
-        self.imagePathLabel.setText(self.imagePath)
-        fileList = os.listdir(self.imagePath)
-        self.imageList = []
-        for i in fileList:
-            extension = i.split('.')[-1]
-            if extension in supportedExtensions:
-                self.imageList.append(self.imagePath + i)
-                self.imageList[-1].replace('\\','/') # Replace Windows' stupid file seperator with one that works on all platforms.
-        self.currentImageNum = 0
-        print (self.imageList)
+        newPath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
+        if len(newPath)>0:
+            self.imagePath = newPath+'/'
+            self.imagePathLabel.setText(self.imagePath)
+            fileList = os.listdir(self.imagePath)
+            self.imageList = []
+            for i in fileList:
+                extension = i.split('.')[-1]
+                if extension in supportedExtensions:
+                    self.imageList.append(self.imagePath + i)
+                    self.imageList[-1].replace('\\','/') # Replace Windows' stupid file seperator with one that works on all platforms.
+            self.currentImageNum = 0
+            print (self.imageList)
         
-        self.setImage()
+            self.setImage()
         
 
     def setImage(self):
