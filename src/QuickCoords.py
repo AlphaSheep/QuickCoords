@@ -15,6 +15,8 @@ supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus]
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
+dragTolerance = 5
+
 
 
 class ToolScreen(QtGui.QWidget):
@@ -51,6 +53,7 @@ class ToolScreen(QtGui.QWidget):
         self.imageBlock.setMinimumWidth(240)
         
         folderButton = QtGui.QPushButton("Image folder:")
+        folderButton.setMaximumWidth(80)
         folderButton.clicked.connect(self.selectFolder)
         
         editBlock = QtGui.QTextEdit()
@@ -85,6 +88,18 @@ class ToolScreen(QtGui.QWidget):
                 self.nextImage()
             if event.key() in backwardKeys:
                 self.prevImage()
+                
+        if event.type() == QEvent.MouseButtonPress:
+            self.mouseStartPos = event.pos()            
+            
+        if event.type() == QEvent.MouseButtonRelease:
+            self.mouseEndPos = event.pos()
+            if abs(self.mouseEndPos.x() - self.mouseStartPos.x()) < dragTolerance and \
+               abs(self.mouseEndPos.y() - self.mouseStartPos.y() < dragTolerance):
+                self.getImageCoord()
+            else:
+                self.dragImage()
+        
         return super(ToolScreen, self).eventFilter(obj, event)
      
 
@@ -92,7 +107,7 @@ class ToolScreen(QtGui.QWidget):
         
         newPath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
         if len(newPath)>0:
-            self.imagePath = newPath+'/'
+            self.imagePath = newPath.replace('\\','/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
             self.imagePathLabel.setText(self.imagePath)
             fileList = os.listdir(self.imagePath)
             self.imageList = []
@@ -100,7 +115,6 @@ class ToolScreen(QtGui.QWidget):
                 extension = i.split('.')[-1]
                 if extension in supportedExtensions:
                     self.imageList.append(self.imagePath + i)
-                    self.imageList[-1].replace('\\','/') # Replace Windows' stupid file seperator with one that works on all platforms.
             self.currentImageNum = 0
             print (self.imageList)
         
@@ -122,6 +136,14 @@ class ToolScreen(QtGui.QWidget):
             print("No images in current folder")
         
         
+    def getImageCoord(self):
+        
+        print("Getting coord")
+        
+    
+    def dragImage(self):
+        
+        print ("Dragging image")
         
     
     def nextImage(self):
