@@ -6,18 +6,33 @@ Created on 05 Mar 2014
 
 import sys, os#, shutil
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QEvent
 from PyQt4 import QtGui
 
 
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
+forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus]
+backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
+
+
 
 class ToolScreen(QtGui.QWidget):
     
     def __init__(self):
+
         super(ToolScreen, self).__init__() # Call the constructor of this class's parent        
+        self.prepare()
         self.initUI()
+        self.installEventFilter(self)
+
+
+    def prepare(self):
+
+        self.imagePath = ""
+        self.currentImageNum = 0
+        self.imageList = []
+        
         
     def initUI(self):
         
@@ -27,8 +42,6 @@ class ToolScreen(QtGui.QWidget):
         outputBox = QtGui.QVBoxLayout()
         titleBox = QtGui.QHBoxLayout()
         
-        self.imagePath = ""
-
         self.imagePathLabel = QtGui.QLabel("", self)
         self.imageLabel = QtGui.QLabel("No image loaded.", self)
         self.image = QtGui.QPixmap()
@@ -61,6 +74,17 @@ class ToolScreen(QtGui.QWidget):
         self.show()
 
 
+    def eventFilter(self, obj, event):
+        
+        if event.type() == QEvent.KeyPress:
+            print ("pressed something")
+            if event.key() in forwardKeys:
+                self.nextImage()
+            if event.key() in backwardKeys:
+                self.prevImage()
+        return super(ToolScreen, self).eventFilter(obj, event)
+     
+
     def selectFolder(self):
         
         self.imagePath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)+'/'
@@ -79,14 +103,35 @@ class ToolScreen(QtGui.QWidget):
         
 
     def setImage(self):
-        currentImage = self.imageList[self.currentImageNum]
-        print("Attempting to load Current image",currentImage)
-        self.image = QtGui.QPixmap(currentImage)
-        self.imageBlock.setPixmap(self.image)
-        self.imageLabel.setText(currentImage.split('/')[-1])
+        
+        if len(self.imageList) > 0:
+            currentImage = self.imageList[self.currentImageNum]
+            print("Attempting to load Current image",currentImage)
+            self.image = QtGui.QPixmap(currentImage)
+            self.imageBlock.setPixmap(self.image)
+            self.imageLabel.setText(currentImage.split('/')[-1])
+        else:
+            print("No images in current folder")
+        
+        
         
     
+    def nextImage(self):
         
+        self.currentImageNum += 1
+        if self.currentImageNum >= len(self.imageList):
+            self.currentImageNum = 0
+        self.setImage()
+            
+                   
+    def prevImage(self):
+        
+        self.currentImageNum -= 1
+        if self.currentImageNum < 0:
+            self.currentImageNum = len(self.imageList)-1
+        self.setImage()
+            
+                              
         
 def main():
     
