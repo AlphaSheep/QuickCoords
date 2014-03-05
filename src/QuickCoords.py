@@ -15,7 +15,7 @@ supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus]
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
-dragTolerance = 5
+dragTolerance = 16 
 
 
 
@@ -48,9 +48,12 @@ class ToolScreen(QtGui.QWidget):
         self.imagePathLabel = QtGui.QLabel("", self)
         self.imageLabel = QtGui.QLabel("No image loaded.", self)
         self.image = QtGui.QPixmap()
-        self.imageBlock = QtGui.QLabel(self) # Just a dummy label to hold the image
-        self.imageBlock.setPixmap(self.image)
-        self.imageBlock.setMinimumWidth(240)
+        #self.imageBlock = QtGui.QLabel(self) # Just a dummy label to hold the image
+        self.imageBlock = QtGui.QGraphicsView()
+        self.imageBlockScene = QtGui.QGraphicsScene()
+        self.imageBlockScene.addPixmap(self.image)
+        self.imageBlock.setScene(self.imageBlockScene)
+        #self.imageBlock.setMinimumWidth(240)
         
         folderButton = QtGui.QPushButton("Image folder:")
         folderButton.setMaximumWidth(80)
@@ -94,11 +97,12 @@ class ToolScreen(QtGui.QWidget):
             
         if event.type() == QEvent.MouseButtonRelease:
             self.mouseEndPos = event.pos()
-            if abs(self.mouseEndPos.x() - self.mouseStartPos.x()) < dragTolerance and \
-               abs(self.mouseEndPos.y() - self.mouseStartPos.y() < dragTolerance):
-                self.getImageCoord()
+            dx = self.mouseEndPos.x() - self.mouseStartPos.x()
+            dy = self.mouseEndPos.y() - self.mouseStartPos.y()
+            if abs(dx) < dragTolerance and abs(dy) < dragTolerance:
+                self.getImageCoord(self.mouseEndPos.x(), self.mouseEndPos.y())
             else:
-                self.dragImage()
+                self.dragImage(dx, dy)
         
         return super(ToolScreen, self).eventFilter(obj, event)
      
@@ -130,20 +134,23 @@ class ToolScreen(QtGui.QWidget):
             width = self.image.width()*self.scaleFactor
             height = self.image.height()*self.scaleFactor
             self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
-            self.imageBlock.setPixmap(self.image)
+            self.imageBlockScene.clear()
+            self.imageBlockScene.addPixmap(self.image)
+            #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
         else:
             print("No images in current folder")
         
         
-    def getImageCoord(self):
+    def getImageCoord(self, x, y):
         
-        print("Getting coord")
+        print("Getting coord", x, y)
         
     
-    def dragImage(self):
+    def dragImage(self, dx, dy):
         
-        print ("Dragging image")
+        print ("Dragging image",self.imageBlock.width(),self.imageBlock.height())
+        self.imageBlock.scroll(-dx, -dy)
         
     
     def nextImage(self):
