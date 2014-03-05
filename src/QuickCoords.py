@@ -32,6 +32,7 @@ class ToolScreen(QtGui.QWidget):
         self.imagePath = ""
         self.currentImageNum = 0
         self.imageList = []
+        self.scaleFactor = 6
         
         
     def initUI(self):
@@ -47,11 +48,13 @@ class ToolScreen(QtGui.QWidget):
         self.image = QtGui.QPixmap()
         self.imageBlock = QtGui.QLabel(self) # Just a dummy label to hold the image
         self.imageBlock.setPixmap(self.image)
+        self.imageBlock.setMinimumWidth(240)
         
         folderButton = QtGui.QPushButton("Image folder:")
         folderButton.clicked.connect(self.selectFolder)
         
         editBlock = QtGui.QTextEdit()
+        editBlock.setMinimumWidth(240)
        
         titleBox.addWidget(folderButton)
         titleBox.addWidget(self.imagePathLabel)
@@ -110,6 +113,9 @@ class ToolScreen(QtGui.QWidget):
             currentImage = self.imageList[self.currentImageNum]
             print("Attempting to load Current image",currentImage)
             self.image = QtGui.QPixmap(currentImage)
+            width = self.image.width()*self.scaleFactor
+            height = self.image.height()*self.scaleFactor
+            self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
             self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
         else:
