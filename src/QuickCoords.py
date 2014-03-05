@@ -4,7 +4,7 @@ Created on 05 Mar 2014
 @author: AlphanumericSheepPig
 '''
 
-import sys
+import sys, os#, shutil
 
 from PyQt4.QtCore import Qt
 from PyQt4 import QtGui
@@ -21,30 +21,45 @@ class ToolScreen(QtGui.QWidget):
         
         imageBox = QtGui.QVBoxLayout()
         outputBox = QtGui.QVBoxLayout()
+        titleBox = QtGui.QHBoxLayout()
         
-        imagePath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images")
+        self.imagePath = ""
 
-        imageBlock = QtGui.QLabel(self) # Just a dummy label to hold an image
-        imageLabel = QtGui.QLabel(imagePath, self)
+        self.imageBlock = QtGui.QLabel(self) # Just a dummy label to hold an image
+        self.imageLabel = QtGui.QLabel(self.imagePath, self)
+        folderButton = QtGui.QPushButton("Image folder:")
+        folderButton.clicked.connect(self.selectFolder)
         
         editBlock = QtGui.QTextEdit()
-        
        
-        imageBox.addWidget(imageLabel)
-        imageBox.addWidget(imageBlock)
+        titleBox.addWidget(folderButton)
+        titleBox.addWidget(self.imageLabel)
+        imageBox.addLayout(titleBox)
+        imageBox.addWidget(self.imageBlock)
+        imageBox.addStretch(1)
+        
+        outputBox.addWidget(editBlock)
         
         mainBox.addLayout(imageBox)
+        mainBox.addStretch(1)
         mainBox.addLayout(outputBox)
-        
         
         self.setLayout(mainBox)
         
-        screenGeometry = QtGui.QDesktopWidget().availableGeometry()
         self.setWindowTitle('Quick Coords')
         self.setWindowState(Qt.WindowMaximized)
     
         self.show()
 
+
+    def selectFolder(self):
+        
+        self.imagePath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images")
+        self.imageLabel.setText(self.imagePath)
+        
+        
+    
+        
         
 def main():
     
