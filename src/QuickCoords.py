@@ -48,33 +48,51 @@ class ToolScreen(QtGui.QWidget):
         self.imagePathLabel = QtGui.QLabel("", self)
         self.imageLabel = QtGui.QLabel("No image loaded.", self)
         self.image = QtGui.QPixmap()
-        #self.imageBlock = QtGui.QLabel(self) # Just a dummy label to hold the image
-        self.imageBlock = QtGui.QGraphicsView()
+
         self.imageBlockScene = QtGui.QGraphicsScene()
         self.imageBlockScene.addPixmap(self.image)
+
+        self.imageBlock = QtGui.QGraphicsView()
         self.imageBlock.setScene(self.imageBlockScene)
-        #self.imageBlock.setMinimumWidth(240)
+        self.imageBlock.setMinimumWidth(240)
         
         folderButton = QtGui.QPushButton("Image folder:")
         folderButton.setMaximumWidth(80)
         folderButton.clicked.connect(self.selectFolder)
         
-        editBlock = QtGui.QTextEdit()
-        editBlock.setMinimumWidth(160)
-        editBlock.setMaximumWidth(240)
+        self.editBlock = QtGui.QTextEdit()
+        self.editBlock.setMinimumWidth(160)
+        self.editBlock.setMaximumWidth(240)
+        self.editBlock.setMinimumHeight(160)
+        
+        self.listBlock = QtGui.QListWidget()
+        self.listBlock.setMinimumWidth(160)
+        self.listBlock.setMaximumWidth(240)
+        self.listBlock.setMinimumHeight(160)
+        self.listBlock.currentRowChanged.connect(self.changeImageFromList)
        
         titleBox.addWidget(folderButton)
         titleBox.addWidget(self.imagePathLabel)
         imageBox.addLayout(titleBox)
         imageBox.addWidget(self.imageBlock)
-        #imageBox.addStretch(1)
         imageBox.addWidget(self.imageLabel)
         
-        outputBox.addWidget(editBlock)
+        outputBox.addWidget(self.editBlock)
+        
+        outputBoxSplitter = QtGui.QSplitter(Qt.Vertical)
+        outputBoxSplitter.addWidget(self.editBlock)
+        outputBoxSplitter.addWidget(self.listBlock)
+        outputBoxSplitter.setChildrenCollapsible(False)
+        
+        #imageBoxWidget = QtGui.QWidget()
+        #imageBoxWidget.setLayout(imageBox)
+        #outputBoxWidget = QtGui.QWidget()
+        #outputBoxWidget.setLayout(outputBox)
         
         mainBox.addLayout(imageBox)
-        #mainBox.addStretch(1)
-        mainBox.addLayout(outputBox)
+        mainBox.addWidget(outputBoxSplitter)
+        
+        #mainBox.addWidget(mainBoxSplitter)
         
         self.setLayout(mainBox)
         
@@ -121,10 +139,27 @@ class ToolScreen(QtGui.QWidget):
                 if extension in supportedExtensions:
                     self.imageList.append(self.imagePath + i)
             self.currentImageNum = 0
-            print (self.imageList)
+            #print (self.imageList)
         
             self.setImage()
+            self.fillListBox()
         
+    
+    def fillListBox(self):
+        self.listBlock.clear()
+        if len(self.imageList) > 0:
+            for f in self.imageList:
+                thisImage = f.split('/')[-1]
+                self.listBlock.addItem(thisImage)
+            self.listBlock.setCurrentRow(self.currentImageNum)
+        else:
+            print("No images in current folder")
+        
+    
+    def changeImageFromList(self):
+        
+        self.currentImageNum = self.listBlock.currentRow()
+        self.setImage()
     
 
     def setImage(self):
@@ -140,6 +175,7 @@ class ToolScreen(QtGui.QWidget):
             self.imageBlockScene.addPixmap(self.image)
             #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
+            self.listBlock.setCurrentRow(self.currentImageNum)
         else:
             print("No images in current folder")
         
