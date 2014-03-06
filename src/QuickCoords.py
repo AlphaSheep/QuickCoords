@@ -60,19 +60,20 @@ class ToolScreen(QtGui.QWidget):
         folderButton.clicked.connect(self.selectFolder)
         
         editBlock = QtGui.QTextEdit()
-        editBlock.setMinimumWidth(240)
+        editBlock.setMinimumWidth(160)
+        editBlock.setMaximumWidth(240)
        
         titleBox.addWidget(folderButton)
         titleBox.addWidget(self.imagePathLabel)
         imageBox.addLayout(titleBox)
         imageBox.addWidget(self.imageBlock)
-        imageBox.addStretch(1)
+        #imageBox.addStretch(1)
         imageBox.addWidget(self.imageLabel)
         
         outputBox.addWidget(editBlock)
         
         mainBox.addLayout(imageBox)
-        mainBox.addStretch(1)
+        #mainBox.addStretch(1)
         mainBox.addLayout(outputBox)
         
         self.setLayout(mainBox)
@@ -92,17 +93,17 @@ class ToolScreen(QtGui.QWidget):
             if event.key() in backwardKeys:
                 self.prevImage()
                 
-        if event.type() == QEvent.MouseButtonPress:
-            self.mouseStartPos = event.pos()            
-            
-        if event.type() == QEvent.MouseButtonRelease:
-            self.mouseEndPos = event.pos()
-            dx = self.mouseEndPos.x() - self.mouseStartPos.x()
-            dy = self.mouseEndPos.y() - self.mouseStartPos.y()
-            if abs(dx) < dragTolerance and abs(dy) < dragTolerance:
-                self.getImageCoord(self.mouseEndPos.x(), self.mouseEndPos.y())
-            else:
-                self.dragImage(dx, dy)
+#         if event.type() == QEvent.MouseButtonPress:
+#             self.mouseStartPos = event.pos()            
+#             
+#         if event.type() == QEvent.MouseButtonRelease:
+#             self.mouseEndPos = event.pos()
+#             dx = self.mouseEndPos.x() - self.mouseStartPos.x()
+#             dy = self.mouseEndPos.y() - self.mouseStartPos.y()
+#             if abs(dx) < dragTolerance and abs(dy) < dragTolerance:
+#                 self.getImageCoord(self.mouseEndPos.x(), self.mouseEndPos.y())
+#             else:
+#                 self.dragImage(dx, dy)
         
         return super(ToolScreen, self).eventFilter(obj, event)
      
@@ -124,6 +125,7 @@ class ToolScreen(QtGui.QWidget):
         
             self.setImage()
         
+    
 
     def setImage(self):
         
