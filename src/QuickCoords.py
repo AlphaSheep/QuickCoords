@@ -10,6 +10,10 @@ from PyQt4.QtCore import Qt, QEvent
 from PyQt4 import QtGui
 
 
+#===========#
+# Constants #
+#===========#
+
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
 forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus]
@@ -17,7 +21,12 @@ backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
 dragTolerance = 16 
 
+folderSaveFileName = 'lastfolder.txt'
 
+
+#===================#
+# Class definitions # 
+#===================#
 
 class ToolScreen(QtGui.QWidget):
     
@@ -27,11 +36,12 @@ class ToolScreen(QtGui.QWidget):
         self.prepare()
         self.initUI()
         self.installEventFilter(self)
+        self.setFoldertoPath(self.imagePath)
 
 
     def prepare(self):
 
-        self.imagePath = ""
+        self.loadLastFolder()
         self.currentImageNum = 0
         self.imageList = []
         self.scaleFactor = 6
@@ -129,7 +139,12 @@ class ToolScreen(QtGui.QWidget):
     def selectFolder(self):
         
         newPath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
-        if len(newPath)>0:
+        self.setFoldertoPath(newPath)
+
+        
+    def setFoldertoPath(self, newPath):
+        
+        if len(newPath) > 0 and os.access(newPath, 0):
             self.imagePath = newPath.replace('\\','/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
             self.imagePathLabel.setText(self.imagePath)
             fileList = os.listdir(self.imagePath)
@@ -143,6 +158,8 @@ class ToolScreen(QtGui.QWidget):
         
             self.setImage()
             self.fillListBox()
+            self.saveCurrentFolder()
+        
         
     
     def fillListBox(self):
@@ -206,6 +223,30 @@ class ToolScreen(QtGui.QWidget):
             self.currentImageNum = len(self.imageList)-1
         self.setImage()
             
+                
+    def saveCurrentFolder(self):
+        
+        try:
+            folderFile = open(folderSaveFileName, 'w')
+            folderFile.write(self.imagePath)
+            folderFile.close()
+        except IOError:
+            print("Could not save last folder")
+            
+        
+        
+    def loadLastFolder(self):
+        
+        try:
+            folderFile = open(folderSaveFileName, 'r')
+            path = folderFile.readline().strip()
+            if len(path) > 0 and os.access(path, 0):
+                self.imagePath = path
+            folderFile.close()
+        except IOError:
+            print("Could not load last folder")
+            self.imagePath = ""
+        
                               
         
 def main():
