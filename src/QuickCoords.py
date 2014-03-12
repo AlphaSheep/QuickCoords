@@ -46,6 +46,10 @@ backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
 imageScaleFactor = 6
 
+outputColumnMinWidth = 160
+outputColumnMaxWidth = 640
+outputColumnMinHeight = 160
+
 folderSaveFileName = 'lastfolder.txt'
 
 
@@ -186,14 +190,14 @@ class ToolScreen(QtGui.QWidget):
         self.table.setHorizontalHeaderLabels(['x','y'])
         self.table.setSelectionBehavior(QtGui.QTableWidget.SelectRows)
         self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-        self.table.setMinimumWidth(160)
-        self.table.setMaximumWidth(240)
-        self.table.setMinimumHeight(160)
+        self.table.setMinimumWidth(outputColumnMinWidth)
+        self.table.setMaximumWidth(outputColumnMaxWidth)
+        self.table.setMinimumHeight(outputColumnMinHeight)
         
         self.listBlock = QtGui.QListWidget()
-        self.listBlock.setMinimumWidth(160)
-        self.listBlock.setMaximumWidth(240)
-        self.listBlock.setMinimumHeight(160)
+        self.listBlock.setMinimumWidth(outputColumnMinWidth)
+        self.listBlock.setMaximumWidth(outputColumnMaxWidth)
+        self.listBlock.setMinimumHeight(outputColumnMinHeight)
         self.listBlock.currentRowChanged.connect(self.changeImageFromList)
        
         titleBox.addWidget(folderButton)
@@ -208,16 +212,20 @@ class ToolScreen(QtGui.QWidget):
         outputBoxSplitter.addWidget(self.table)
         outputBoxSplitter.addWidget(self.listBlock)
         outputBoxSplitter.setChildrenCollapsible(False)
+        outputBoxSplitter.setStretchFactor(0, 3)
+        outputBoxSplitter.setStretchFactor(1, 1)
         
-        #imageBoxWidget = QtGui.QWidget()
-        #imageBoxWidget.setLayout(imageBox)
-        #outputBoxWidget = QtGui.QWidget()
-        #outputBoxWidget.setLayout(outputBox)
+        imageBoxWidget = QtGui.QWidget()
+        imageBoxWidget.setLayout(imageBox)
         
-        mainBox.addLayout(imageBox)
-        mainBox.addWidget(outputBoxSplitter)
-        
-        #mainBox.addWidget(mainBoxSplitter)
+        mainBoxSplitter = QtGui.QSplitter(Qt.Horizontal)
+        mainBoxSplitter.setChildrenCollapsible(False)
+        mainBoxSplitter.addWidget(imageBoxWidget)
+        mainBoxSplitter.addWidget(outputBoxSplitter)
+        mainBoxSplitter.setStretchFactor(0, 4)
+        mainBoxSplitter.setStretchFactor(1, 1)
+                
+        mainBox.addWidget(mainBoxSplitter)
         
         self.setLayout(mainBox)
         
@@ -305,9 +313,6 @@ class ToolScreen(QtGui.QWidget):
             self.table.setItem(i, 1, yItem)
             
             
-            
-            
-    
     def dragImage(self, dx, dy):
         
         print ("Dragging image",self.imageBlock.width(),self.imageBlock.height())
@@ -339,7 +344,6 @@ class ToolScreen(QtGui.QWidget):
         except IOError:
             print("Could not save last folder")
             
-        
         
     def loadLastFolder(self):
         
