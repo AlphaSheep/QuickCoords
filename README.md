@@ -5,7 +5,7 @@ QuickCoords
 
 The focus is on speed and optimised work flow.
 
-It is still in the early stages of development.
+It is being written in Python 3 using PyQt4.
 
 License
 -------
