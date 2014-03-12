@@ -2,7 +2,6 @@
 QuickCoords is a simple tool for quickly and easily capturing a series of pixel 
 coordinates from a large number of images.
 
-
     Copyright (c) 2014, Brendan Gray and Sylvermyst Technologies
     
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,7 +42,9 @@ supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal]
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
-dragTolerance = 16 
+imageScaleFactor = 6
+
+dragTolerance = 16
 
 folderSaveFileName = 'lastfolder.txt'
 
@@ -51,6 +52,18 @@ folderSaveFileName = 'lastfolder.txt'
 #===================#
 # Class definitions # 
 #===================#
+
+
+class ClickableImageBox(QtGui.QGraphicsScene):
+    
+    def mouseReleaseEvent(self, *args, **kwargs):
+        
+        event = args[0]
+        if event.button() == Qt.LeftButton:
+            point = event.scenePos() 
+            print(point.x()/imageScaleFactor, point.y()/imageScaleFactor)
+        return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
+
 
 class ToolScreen(QtGui.QWidget):
     
@@ -67,7 +80,7 @@ class ToolScreen(QtGui.QWidget):
         self.loadLastFolder()
         self.currentImageNum = 0
         self.imageList = []
-        self.scaleFactor = 6
+        self.scaleFactor = imageScaleFactor
         
     
     def keyPressEvent(self, event):
@@ -77,7 +90,7 @@ class ToolScreen(QtGui.QWidget):
         if event.key() in backwardKeys:
             self.prevImage()
         
-    
+        
     def initUI(self):
         
         mainBox = QtGui.QHBoxLayout()
@@ -90,7 +103,7 @@ class ToolScreen(QtGui.QWidget):
         self.imageLabel = QtGui.QLabel("No image loaded.", self)
         self.image = QtGui.QPixmap()
 
-        self.imageBlockScene = QtGui.QGraphicsScene()
+        self.imageBlockScene = ClickableImageBox()
         self.imageBlockScene.addPixmap(self.image)
 
         self.imageBlock = QtGui.QGraphicsView()
@@ -117,9 +130,9 @@ class ToolScreen(QtGui.QWidget):
        
         titleBox.addWidget(folderButton)
         titleBox.addWidget(self.imagePathLabel)
-        imageBox.addLayout(titleBox)
+        titleBox.addWidget(self.imageLabel)
         imageBox.addWidget(self.imageBlock)
-        imageBox.addWidget(self.imageLabel)
+        imageBox.addLayout(titleBox)
         
         outputBox.addWidget(self.editBlock)
         
@@ -148,7 +161,8 @@ class ToolScreen(QtGui.QWidget):
 
     def selectFolder(self):
         
-        newPath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
+        fileDialog = QtGui.QFileDialog()
+        newPath = fileDialog.getExistingDirectory(None, "Select a folder with images", self.imagePath)
         self.setFoldertoPath(newPath)
 
         
