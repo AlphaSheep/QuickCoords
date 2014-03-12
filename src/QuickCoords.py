@@ -16,7 +16,7 @@ from PyQt4 import QtGui
 
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
-forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus]
+forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal]
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
 dragTolerance = 16 
@@ -35,7 +35,6 @@ class ToolScreen(QtGui.QWidget):
         super(ToolScreen, self).__init__() # Call the constructor of this class's parent        
         self.prepare()
         self.initUI()
-        self.installEventFilter(self)
         self.setFoldertoPath(self.imagePath)
 
 
@@ -46,7 +45,15 @@ class ToolScreen(QtGui.QWidget):
         self.imageList = []
         self.scaleFactor = 6
         
+    
+    def keyPressEvent(self, event):
         
+        if event.key() in forwardKeys:
+            self.nextImage()
+        if event.key() in backwardKeys:
+            self.prevImage()
+        
+    
     def initUI(self):
         
         mainBox = QtGui.QHBoxLayout()
@@ -70,7 +77,10 @@ class ToolScreen(QtGui.QWidget):
         folderButton.setMaximumWidth(80)
         folderButton.clicked.connect(self.selectFolder)
         
-        self.editBlock = QtGui.QTextEdit()
+        #self.editBlock = QtGui.QTextEdit()
+        self.editBlock = QtGui.QTableWidget(0,2)
+        self.editBlock.setHorizontalHeaderLabels(['x','y'])
+        self.editBlock.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
         self.editBlock.setMinimumWidth(160)
         self.editBlock.setMaximumWidth(240)
         self.editBlock.setMinimumHeight(160)
@@ -112,30 +122,6 @@ class ToolScreen(QtGui.QWidget):
         self.show()
 
 
-    def eventFilter(self, obj, event):
-        
-        if event.type() == QEvent.KeyPress:
-            print ("pressed something")
-            if event.key() in forwardKeys:
-                self.nextImage()
-            if event.key() in backwardKeys:
-                self.prevImage()
-                
-#         if event.type() == QEvent.MouseButtonPress:
-#             self.mouseStartPos = event.pos()            
-#             
-#         if event.type() == QEvent.MouseButtonRelease:
-#             self.mouseEndPos = event.pos()
-#             dx = self.mouseEndPos.x() - self.mouseStartPos.x()
-#             dy = self.mouseEndPos.y() - self.mouseStartPos.y()
-#             if abs(dx) < dragTolerance and abs(dy) < dragTolerance:
-#                 self.getImageCoord(self.mouseEndPos.x(), self.mouseEndPos.y())
-#             else:
-#                 self.dragImage(dx, dy)
-        
-        return super(ToolScreen, self).eventFilter(obj, event)
-     
-
     def selectFolder(self):
         
         newPath = QtGui.QFileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
@@ -145,7 +131,7 @@ class ToolScreen(QtGui.QWidget):
     def setFoldertoPath(self, newPath):
         
         if len(newPath) > 0 and os.access(newPath, 0):
-            self.imagePath = newPath.replace('\\','/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
+            self.imagePath = newPath.replace('\\','/').strip('/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
             self.imagePathLabel.setText(self.imagePath)
             fileList = os.listdir(self.imagePath)
             self.imageList = []
@@ -189,6 +175,7 @@ class ToolScreen(QtGui.QWidget):
             height = self.image.height()*self.scaleFactor
             self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
             self.imageBlockScene.clear()
+            self.imageBlockScene.setSceneRect(0, 0, width, height) 
             self.imageBlockScene.addPixmap(self.image)
             #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
