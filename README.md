@@ -25,9 +25,8 @@ Keys
 * D K + . ] and > move to the next image.
 * A J - , [ and < move to the previous image.
 * Clicking on the image will add the coordinates of that pixel to the list on the right.
-* Backspace will delete the last point on the list.
+* Right clicking or Backspace will delete the last point on the list.
 * Delete will delete the selected points from the list.
-
 
 
 License

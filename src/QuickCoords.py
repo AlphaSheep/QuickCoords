@@ -64,6 +64,7 @@ class Point():
         
         self.x = x
         self.y = y
+        self.colour = 0
         
         
     def __str__(self):
@@ -78,7 +79,6 @@ class CoordinateList():
         self.points = initPoints
         from time import time
         self.id = time()
-        print ("Initialised coordinate list",self.id,"with points",self.points)
 
 
     def addPoint(self, point):
@@ -95,6 +95,11 @@ class CoordinateList():
     def removeLastPoint(self):
         
         self.points = self.points[:-1]
+    
+    
+    def length(self):
+        
+        return len(self.points)
     
     
     def removePoint(self, n):
@@ -120,8 +125,10 @@ class ClickableImageBox(QtGui.QGraphicsScene):
         event = args[0]
         if event.button() == Qt.LeftButton:
             point = Point(event.scenePos().x()/imageScaleFactor, event.scenePos().y()/imageScaleFactor)
-            print(point)
             self.parent().coordList.addPoint(point)
+            self.parent().updatePoints()
+        if event.button() == Qt.RightButton:
+            self.parent().coordList.removeLastPoint()
             self.parent().updatePoints()
 
         return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
@@ -143,9 +150,6 @@ class TableBox(QtGui.QTableWidget):
         newCoordList = CoordinateList([])
         oldCoordList = self.toolScreen.coordList
 
-        print('start old', oldCoordList)
-        print('start new', newCoordList)              
-        
         selectedRows = []
         for index in self.selectionModel().selectedRows():
             selectedRows.append(index.row())
@@ -153,14 +157,27 @@ class TableBox(QtGui.QTableWidget):
         for i in range(self.rowCount()):
             if not i in selectedRows:
                 newCoordList.addPoint(oldCoordList.points[i])
-                print("No:",i)
-            else:
-                print("Yes:",i)
         self.toolScreen.coordList = newCoordList
         self.toolScreen.updatePoints()
+        
+    
+    def selectionChanged(self, *args, **kwargs):
+        
+        selectedRows = []
+        for index in self.selectionModel().selectedRows():
+            selectedRows.append(index.row())
+        
+        for i in range(self.toolScreen.coordList.length()):
+            print(i, self.rowCount(), len(self.toolScreen.coordList.points))
+            if i in selectedRows:
+                self.toolScreen.coordList.points[i].colour = 1
+            else:
+                self.toolScreen.coordList.points[i].colour = 0
+                
+        self.toolScreen.drawImagePoints()
+        
+        return QtGui.QTableWidget.selectionChanged(self, *args, **kwargs)
 
-        print('end old', oldCoordList)
-        print('end new', newCoordList)              
 
 
 class ToolScreen(QtGui.QWidget):
@@ -317,15 +334,19 @@ class ToolScreen(QtGui.QWidget):
             currentImage = self.imageList[self.currentImageNum]
             print("Attempting to load Current image",currentImage)
             self.image = QtGui.QPixmap(currentImage)
-            width = self.image.width()*self.scaleFactor
-            height = self.image.height()*self.scaleFactor
+            self.image.originalWidth = self.image.width()
+            self.image.originalHeight = self.image.height()
+            width = self.image.originalWidth * self.scaleFactor
+            height = self.image.originalHeight * self.scaleFactor
             self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
+            self.originalImage = self.image.copy()
             self.imageBlockScene.clear()
             self.imageBlockScene.setSceneRect(0, 0, width, height) 
             self.imageBlockScene.addPixmap(self.image)
             #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
             self.listBlock.setCurrentRow(self.currentImageNum)
+            self.updatePoints()
         else:
             print("No images in current folder")
         
@@ -343,13 +364,30 @@ class ToolScreen(QtGui.QWidget):
             yItem = QtGui.QTableWidgetItem('{:.1f}'.format(points[i].y))
             yItem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             self.table.setItem(i, 1, yItem)
+        self.drawImagePoints()
             
             
-    def dragImage(self, dx, dy):
+    def drawImagePoints(self):
         
-        print ("Dragging image",self.imageBlock.width(),self.imageBlock.height())
-        self.imageBlock.scroll(-dx, -dy)
+        newImage = self.originalImage.toImage()
+        #painter = QtGui.QPainter(newImage)
         
+        for p in self.coordList.points:
+            top = int((p.y-0.4) * self.scaleFactor)
+            bottom = int((p.y+0.4) * self.scaleFactor)
+            left = int((p.x-0.4) * self.scaleFactor)
+            right = int((p.x+0.4) * self.scaleFactor)
+            if p.colour == 0:
+                colour = QtGui.qRgb(0, 255, 0)
+            else:
+                colour = QtGui.qRgb(255, 0, 0)
+            for x in range(left, right+1):
+                for y in range(top, bottom+1):    
+                    newImage.setPixel(x, y, colour)
+            
+        self.image.convertFromImage(newImage)
+        self.imageBlockScene.update()
+ 
     
     def nextImage(self):
         
