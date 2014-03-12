@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding: utf-8
 '''
 QuickCoords is a simple tool for quickly and easily capturing a series of pixel 
 coordinates from a large number of images.
@@ -22,7 +24,7 @@ coordinates from a large number of images.
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
 
-
+Running or building this software from source requires a working installation of Python 3 and PyQt.
 
 '''
 
@@ -33,9 +35,9 @@ from PyQt4.QtCore import Qt
 from PyQt4 import QtGui
 
 
-#===========#
-# Constants #
-#===========#
+#==================#
+# Global constants #
+#==================#
 
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
@@ -43,8 +45,6 @@ forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Q
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
 
 imageScaleFactor = 6
-
-dragTolerance = 16
 
 folderSaveFileName = 'lastfolder.txt'
 
@@ -54,16 +54,82 @@ folderSaveFileName = 'lastfolder.txt'
 #===================#
 
 
+class Point():
+    
+    def __init__(self, x, y):
+        
+        self.x = x
+        self.y = y
+        
+        
+    def __repr__(self):
+        
+        return '('+str(self.x)+', '+str(self.y)+')'
+
+
+class CoordinateList():
+    
+    def __init__(self, points = []):
+        
+        self.points = points
+
+
+    def addPoint(self, point):
+        
+        self.points.append(point)
+        
+    
+    def addPoints(self, points):
+        
+        for p in points:
+            self.points.append(p)
+            
+            
+    def removeLastPoint(self):
+        
+        self.points = self.points[:-1]
+    
+    
+    def removePoint(self, n):
+        
+        if n >= len(self.points):
+            self.points[n] # Lazily force list index out of range, otherwise it would have passed silently.
+        else:
+            self.points = self.points[:n] + self.points[n+1:]
+        
+
+    def __repr__(self):
+        
+        res = ''
+        for p in self.points:
+            res += str(p)+' '
+        return res.strip()
+
+
 class ClickableImageBox(QtGui.QGraphicsScene):
     
     def mouseReleaseEvent(self, *args, **kwargs):
         
         event = args[0]
         if event.button() == Qt.LeftButton:
-            point = event.scenePos() 
-            print(point.x()/imageScaleFactor, point.y()/imageScaleFactor)
+            point = Point(event.scenePos().x()/imageScaleFactor, event.scenePos().y()/imageScaleFactor)
+            print(point)
+            self.parent().coordList.addPoint(point)
+            self.parent().updatePoints()
+
         return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
 
+
+class TableBox(QtGui.QTableWidget):
+    
+    def keyPressEvent(self, *args, **kwargs):
+        
+        event = args[0]
+        print("Pressed a key in the table", event.key())
+        
+        return QtGui.QTableWidget.keyPressEvent(self, *args, **kwargs)
+    
+        
 
 class ToolScreen(QtGui.QWidget):
     
@@ -80,6 +146,7 @@ class ToolScreen(QtGui.QWidget):
         self.loadLastFolder()
         self.currentImageNum = 0
         self.imageList = []
+        self.coordList = CoordinateList()
         self.scaleFactor = imageScaleFactor
         
     
@@ -103,7 +170,7 @@ class ToolScreen(QtGui.QWidget):
         self.imageLabel = QtGui.QLabel("No image loaded.", self)
         self.image = QtGui.QPixmap()
 
-        self.imageBlockScene = ClickableImageBox()
+        self.imageBlockScene = ClickableImageBox(parent = self)
         self.imageBlockScene.addPixmap(self.image)
 
         self.imageBlock = QtGui.QGraphicsView()
@@ -115,12 +182,13 @@ class ToolScreen(QtGui.QWidget):
         folderButton.clicked.connect(self.selectFolder)
         
         #self.editBlock = QtGui.QTextEdit()
-        self.editBlock = QtGui.QTableWidget(0,2)
-        self.editBlock.setHorizontalHeaderLabels(['x','y'])
-        self.editBlock.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
-        self.editBlock.setMinimumWidth(160)
-        self.editBlock.setMaximumWidth(240)
-        self.editBlock.setMinimumHeight(160)
+        self.table = TableBox(0,2, parent = self)
+        self.table.setHorizontalHeaderLabels(['x','y'])
+        self.table.setSelectionBehavior(QtGui.QTableWidget.SelectRows)
+        self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
+        self.table.setMinimumWidth(160)
+        self.table.setMaximumWidth(240)
+        self.table.setMinimumHeight(160)
         
         self.listBlock = QtGui.QListWidget()
         self.listBlock.setMinimumWidth(160)
@@ -134,10 +202,10 @@ class ToolScreen(QtGui.QWidget):
         imageBox.addWidget(self.imageBlock)
         imageBox.addLayout(titleBox)
         
-        outputBox.addWidget(self.editBlock)
+        outputBox.addWidget(self.table)
         
         outputBoxSplitter = QtGui.QSplitter(Qt.Vertical)
-        outputBoxSplitter.addWidget(self.editBlock)
+        outputBoxSplitter.addWidget(self.table)
         outputBoxSplitter.addWidget(self.listBlock)
         outputBoxSplitter.setChildrenCollapsible(False)
         
@@ -184,7 +252,6 @@ class ToolScreen(QtGui.QWidget):
             self.fillListBox()
             self.saveCurrentFolder()
         
-        
     
     def fillListBox(self):
         self.listBlock.clear()
@@ -222,10 +289,23 @@ class ToolScreen(QtGui.QWidget):
             print("No images in current folder")
         
         
-    def getImageCoord(self, x, y):
+    def updatePoints(self):
         
-        print("Getting coord", x, y)
-        
+        points = self.coordList.points
+        nPoints = len(points)
+        self.table.clearContents()
+        self.table.setRowCount(nPoints)
+        for i in range(nPoints):
+            xItem = QtGui.QTableWidgetItem('{:.1f}'.format(points[i].x))
+            xItem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            self.table.setItem(i, 0, xItem)
+            yItem = QtGui.QTableWidgetItem('{:.1f}'.format(points[i].y))
+            yItem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            self.table.setItem(i, 1, yItem)
+            
+            
+            
+            
     
     def dragImage(self, dx, dy):
         
@@ -277,7 +357,7 @@ class ToolScreen(QtGui.QWidget):
 def main():
     
     app = QtGui.QApplication(sys.argv)
-    toolScreen = ToolScreen()
+    toolScreen = ToolScreen() 
     sys.exit(app.exec_())
     
 
