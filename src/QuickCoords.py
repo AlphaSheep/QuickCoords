@@ -41,8 +41,8 @@ from PyQt4 import QtGui
 
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
-forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal]
-backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus]
+forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal, Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight]
+backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus, Qt.Key_ParenLeft, Qt.Key_BraceLeft, Qt.Key_BracketLeft]
 
 imageScaleFactor = 6
 
@@ -66,16 +66,19 @@ class Point():
         self.y = y
         
         
-    def __repr__(self):
+    def __str__(self):
         
         return '('+str(self.x)+', '+str(self.y)+')'
 
 
 class CoordinateList():
     
-    def __init__(self, points = []):
+    def __init__(self, initPoints):
         
-        self.points = points
+        self.points = initPoints
+        from time import time
+        self.id = time()
+        print ("Initialised coordinate list",self.id,"with points",self.points)
 
 
     def addPoint(self, point):
@@ -102,8 +105,8 @@ class CoordinateList():
             self.points = self.points[:n] + self.points[n+1:]
         
 
-    def __repr__(self):
-        
+    def __str__(self):
+         
         res = ''
         for p in self.points:
             res += str(p)+' '
@@ -129,11 +132,36 @@ class TableBox(QtGui.QTableWidget):
     def keyPressEvent(self, *args, **kwargs):
         
         event = args[0]
-        print("Pressed a key in the table", event.key())
+        if event.key() == Qt.Key_Delete:
+            self.deleteSelectedRows()
         
         return QtGui.QTableWidget.keyPressEvent(self, *args, **kwargs)
     
+    
+    def deleteSelectedRows(self):
         
+        newCoordList = CoordinateList([])
+        oldCoordList = self.toolScreen.coordList
+
+        print('start old', oldCoordList)
+        print('start new', newCoordList)              
+        
+        selectedRows = []
+        for index in self.selectionModel().selectedRows():
+            selectedRows.append(index.row())
+        
+        for i in range(self.rowCount()):
+            if not i in selectedRows:
+                newCoordList.addPoint(oldCoordList.points[i])
+                print("No:",i)
+            else:
+                print("Yes:",i)
+        self.toolScreen.coordList = newCoordList
+        self.toolScreen.updatePoints()
+
+        print('end old', oldCoordList)
+        print('end new', newCoordList)              
+
 
 class ToolScreen(QtGui.QWidget):
     
@@ -150,7 +178,7 @@ class ToolScreen(QtGui.QWidget):
         self.loadLastFolder()
         self.currentImageNum = 0
         self.imageList = []
-        self.coordList = CoordinateList()
+        self.coordList = CoordinateList([])
         self.scaleFactor = imageScaleFactor
         
     
@@ -160,6 +188,9 @@ class ToolScreen(QtGui.QWidget):
             self.nextImage()
         if event.key() in backwardKeys:
             self.prevImage()
+        if event.key() == Qt.Key_Backspace:
+            self.coordList.removeLastPoint()
+            self.updatePoints()
         
         
     def initUI(self):
@@ -186,7 +217,8 @@ class ToolScreen(QtGui.QWidget):
         folderButton.clicked.connect(self.selectFolder)
         
         #self.editBlock = QtGui.QTextEdit()
-        self.table = TableBox(0,2, parent = self)
+        self.table = TableBox(0,2)
+        self.table.toolScreen = self
         self.table.setHorizontalHeaderLabels(['x','y'])
         self.table.setSelectionBehavior(QtGui.QTableWidget.SelectRows)
         self.table.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
