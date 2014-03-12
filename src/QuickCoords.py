@@ -254,6 +254,7 @@ class ToolScreen(QtGui.QWidget):
         
     
     def fillListBox(self):
+        
         self.listBlock.clear()
         if len(self.imageList) > 0:
             for f in self.imageList:
@@ -357,7 +358,7 @@ class ToolScreen(QtGui.QWidget):
 def main():
     
     app = QtGui.QApplication(sys.argv)
-    toolScreen = ToolScreen() 
+    toolScreen = ToolScreen() #@UnusedVariable used to prevent prevent premature garbage collection
     sys.exit(app.exec_())
     
 
