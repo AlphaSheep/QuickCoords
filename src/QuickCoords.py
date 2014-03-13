@@ -31,7 +31,7 @@ Running or building this software from source requires a working installation of
 import sys 
 import os
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QTimer
 from PyQt4 import QtGui
 
 
@@ -51,6 +51,8 @@ outputColumnMaxWidth = 640
 outputColumnMinHeight = 160
 
 folderSaveFileName = 'lastfolder.txt'
+
+targetFPS = 30
 
 
 #===================#
@@ -143,10 +145,10 @@ class ClickableImageBox(QtGui.QGraphicsScene):
         if event.button() == Qt.LeftButton:
             point = Point(event.scenePos().x()/imageScaleFactor, event.scenePos().y()/imageScaleFactor)
             self.parent().coordList.addPoint(point)
-            self.parent().updatePoints()
+            #self.parent().updatePoints()
         if event.button() == Qt.RightButton:
             self.parent().coordList.removeLastPoint()
-            self.parent().updatePoints()
+            #self.parent().updatePoints()
 
         return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
 
@@ -174,7 +176,7 @@ class TableBox(QtGui.QTableWidget):
             if not i in selectedPoints:
                 newCoordList.addPoint(oldCoordList.points[i])
         self.toolScreen.coordList = newCoordList
-        self.toolScreen.updatePoints()
+        # self.toolScreen.updatePoints()
         
     
     def selectionChanged(self, *args, **kwargs):
@@ -188,8 +190,6 @@ class TableBox(QtGui.QTableWidget):
             else:
                 self.toolScreen.coordList.points[i].colour = 0
                 
-        self.toolScreen.drawImagePoints()
-        
         return QtGui.QTableWidget.selectionChanged(self, *args, **kwargs)
     
     
@@ -221,6 +221,10 @@ class ToolScreen(QtGui.QWidget):
         self.initUI()
         self.setFoldertoPath(self.imagePath)
 
+        self.fpsTimer = QTimer()
+        self.fpsTimer.timeout.connect(self.updateDisplay)
+        self.fpsTimer.start(1000/targetFPS)
+
 
     def prepare(self):
 
@@ -229,7 +233,13 @@ class ToolScreen(QtGui.QWidget):
         self.imageList = []
         self.coordList = CoordinateList([])
         self.scaleFactor = imageScaleFactor
+               
+                     
+    def updateDisplay(self):
         
+        self.updatePoints()
+        self.drawImagePoints()
+                
     
     def keyPressEvent(self, event):
         
@@ -239,19 +249,14 @@ class ToolScreen(QtGui.QWidget):
             self.prevImage()
         if event.key() == Qt.Key_Backspace:
             self.coordList.removeLastPoint()
-            self.updatePoints()
         if event.key() == Qt.Key_W:
             self.shiftSelected('up')
-            self.updatePoints()
         if event.key() == Qt.Key_A:
             self.shiftSelected('left')
-            self.updatePoints()
         if event.key() == Qt.Key_S:
             self.shiftSelected('down')
-            self.updatePoints()
         if event.key() == Qt.Key_D:
             self.shiftSelected('right')
-            self.updatePoints()
 
         
     def initUI(self):
@@ -397,7 +402,7 @@ class ToolScreen(QtGui.QWidget):
             #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
             self.listBlock.setCurrentRow(self.currentImageNum)
-            self.updatePoints()
+            #self.updatePoints()
         else:
             print("No images in current folder")
         
@@ -418,14 +423,11 @@ class ToolScreen(QtGui.QWidget):
             yItem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             self.table.setItem(i, 1, yItem)
         self.table.setSelectedRows(selectedPoints)
-        self.drawImagePoints()
         
-            
             
     def drawImagePoints(self):
         
         newImage = self.originalImage.toImage()
-        #painter = QtGui.QPainter(newImage)
         
         for p in self.coordList.points:
             top = int((p.y-0.4) * self.scaleFactor)
