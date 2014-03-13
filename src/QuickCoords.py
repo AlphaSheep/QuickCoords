@@ -142,7 +142,15 @@ class CoordinateList():
                 return i
         return -1
         
-
+    
+    def copy(self):
+        
+        res = ''
+        for p in self.points:
+            res += str(p.x)+'\t'+str(p.y)+'\n'
+        return res.strip()
+        
+    
     def __str__(self):
          
         res = ''
@@ -404,7 +412,7 @@ class ToolScreen(QtGui.QWidget):
     
     def copyTable(self):
         
-        pass
+        self.clipboard.setText(self.coordList.copy())
 
 
     def exportTable(self):
@@ -553,6 +561,8 @@ def main():
     
     app = QtGui.QApplication(sys.argv)
     toolScreen = ToolScreen() #@UnusedVariable used to prevent prevent premature garbage collection
+    toolScreen.clipboard = app.clipboard()
+    print("!!!")
     sys.exit(app.exec_())
     
 
