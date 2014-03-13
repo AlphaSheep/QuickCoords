@@ -51,3 +51,5 @@ docs/_build/
 
 # Program specific settings
 lastfolder.txt
+.settings/
+desktop.ini
