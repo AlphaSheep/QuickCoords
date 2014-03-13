@@ -48,8 +48,9 @@ imageScaleFactor = 6
 selectionRadius = 1
 
 outputColumnMinWidth = 160
-outputColumnMaxWidth = 640
+outputColumnMaxWidth = 6400
 outputColumnMinHeight = 160
+imageColumnMinWidth = 180
 
 folderSaveFileName = 'lastfolder.txt'
 
@@ -97,8 +98,6 @@ class CoordinateList():
     def __init__(self, initPoints):
         
         self.points = initPoints
-        from time import time
-        self.id = time()
 
 
     def addPoint(self, point):
@@ -117,6 +116,11 @@ class CoordinateList():
         self.points = self.points[:-1]
     
     
+    def clear(self):
+        
+        self.points = []
+        
+         
     def length(self):
         
         return len(self.points)
@@ -293,11 +297,24 @@ class ToolScreen(QtGui.QWidget):
 
         self.imageBlock = QtGui.QGraphicsView()
         self.imageBlock.setScene(self.imageBlockScene)
-        self.imageBlock.setMinimumWidth(240)
+        self.imageBlock.setMinimumWidth(imageColumnMinWidth)
         
         folderButton = QtGui.QPushButton("Image folder:")
         folderButton.setMaximumWidth(80)
         folderButton.clicked.connect(self.selectFolder)
+
+        tableCopyButton = QtGui.QPushButton("Copy")
+        tableCopyButton.setMinimumWidth(40)
+        tableCopyButton.clicked.connect(self.copyTable)
+
+        tableExportButton = QtGui.QPushButton("Export")
+        tableExportButton.setMinimumWidth(40)
+        tableExportButton.clicked.connect(self.exportTable)
+
+        tableClearButton = QtGui.QPushButton("Clear")
+        tableClearButton.setMinimumWidth(40)
+        tableClearButton.clicked.connect(self.clearTable)
+
         
         #self.editBlock = QtGui.QTextEdit()
         self.table = TableBox(0,2)
@@ -323,8 +340,18 @@ class ToolScreen(QtGui.QWidget):
         
         outputBox.addWidget(self.table)
         
+        tableButtonsLayout = QtGui.QHBoxLayout()
+        tableButtonsLayout.addWidget(tableCopyButton)
+        tableButtonsLayout.addWidget(tableExportButton)
+        tableButtonsLayout.addWidget(tableClearButton)
+        tableLayout = QtGui.QVBoxLayout()   
+        tableLayout.addLayout(tableButtonsLayout)     
+        tableLayout.addWidget(self.table)
+        tableWidget = QtGui.QWidget()
+        tableWidget.setLayout(tableLayout)
+
         outputBoxSplitter = QtGui.QSplitter(Qt.Vertical)
-        outputBoxSplitter.addWidget(self.table)
+        outputBoxSplitter.addWidget(tableWidget)
         outputBoxSplitter.addWidget(self.listBlock)
         outputBoxSplitter.setChildrenCollapsible(False)
         outputBoxSplitter.setStretchFactor(0, 3)
@@ -374,6 +401,21 @@ class ToolScreen(QtGui.QWidget):
             self.fillListBox()
             self.saveCurrentFolder()
         
+    
+    def copyTable(self):
+        
+        pass
+
+
+    def exportTable(self):
+        
+        pass
+
+
+    def clearTable(self):
+        
+        self.coordList.clear()
+
     
     def fillListBox(self):
         
