@@ -178,15 +178,22 @@ class ClickableImageBox(QtGui.QGraphicsScene):
             if nearPoint >= 0:
                 selectedPoints = self.parent().table.getSelectedPoints()
                 if not nearPoint in selectedPoints:
-                    selectedPoints.append(nearPoint)
+                    if event.modifiers() & (Qt.ShiftModifier | Qt.ControlModifier):
+                        selectedPoints.append(nearPoint)
+                    else:
+                        selectedPoints = [nearPoint]
                 else:
-                    selectedPoints.remove(nearPoint)
+                    if event.modifiers() & Qt.ControlModifier:
+                        selectedPoints.remove(nearPoint)
+                    elif not event.modifiers() & Qt.ShiftModifier:
+                        selectedPoints = [nearPoint]
                 self.parent().table.setSelectedRows(selectedPoints)
                 
             else:
                 self.parent().coordList.addPoint(point)
         if event.button() == Qt.RightButton:
             self.parent().coordList.removeLastPoint()
+        self.parent().tableViewChanged = True
 
         return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
 
@@ -196,8 +203,8 @@ class TableBox(QtGui.QTableWidget):
     def keyPressEvent(self, *args, **kwargs):
         
         event = args[0]
+        self.toolScreen.ignoreDeletes = True
         self.toolScreen.keyPressEvent(event)
-        
         return QtGui.QTableWidget.keyPressEvent(self, *args, **kwargs)
     
     
@@ -212,7 +219,7 @@ class TableBox(QtGui.QTableWidget):
             if not i in selectedPoints:
                 newCoordList.addPoint(oldCoordList.points[i])
         self.toolScreen.coordList = newCoordList
-        self.toolScreen.updatePoints()
+        self.setSelectedRows([])
         
     
     def selectionChanged(self, *args, **kwargs):
@@ -223,7 +230,8 @@ class TableBox(QtGui.QTableWidget):
             if i in selectedPoints:
                 self.toolScreen.coordList.points[i].colour = 1
             else:
-                self.toolScreen.coordList.points[i].colour = 0
+                self.toolScreen.coordList.points[i].colour = 0            
+        self.toolScreen.tableViewChanged = True
                 
         return QtGui.QTableWidget.selectionChanged(self, *args, **kwargs)
     
@@ -268,12 +276,16 @@ class ToolScreen(QtGui.QWidget):
         self.imageList = []
         self.coordList = CoordinateList([])
         self.scaleFactor = imageScaleFactor
+        self.tableViewChanged = False
+        self.ignoreDeletes = False
                
                      
     def updateDisplay(self):
         
-        self.updatePoints()
-        self.drawImagePoints()
+        if self.tableViewChanged:
+            self.updatePoints()
+            self.drawImagePoints()
+            self.tableViewChanged = False
                 
     
     def keyPressEvent(self, event):
@@ -285,7 +297,9 @@ class ToolScreen(QtGui.QWidget):
         if event.key() == Qt.Key_Backspace:
             self.coordList.removeLastPoint()
         if event.key() == Qt.Key_Delete:
-            self.table.deleteSelectedRows()
+            if not self.ignoreDeletes:
+                self.table.deleteSelectedRows()
+            self.ignoreDeletes = False   
         if event.key() == Qt.Key_W:
             self.shiftSelected('up')
         if event.key() == Qt.Key_A:
@@ -294,6 +308,7 @@ class ToolScreen(QtGui.QWidget):
             self.shiftSelected('down')
         if event.key() == Qt.Key_D:
             self.shiftSelected('right')
+        self.tableViewChanged = True
 
         
     def initUI(self):
@@ -443,6 +458,7 @@ class ToolScreen(QtGui.QWidget):
     def clearTable(self):
         
         self.coordList.clear()
+        self.tableViewChanged = True
 
     
     def fillListBox(self):
@@ -455,8 +471,9 @@ class ToolScreen(QtGui.QWidget):
             self.listBlock.setCurrentRow(self.currentImageNum)
         else:
             print("No images in current folder")
+        self.tableViewChanged = True
+
         
-    
     def changeImageFromList(self):
         
         self.currentImageNum = self.listBlock.currentRow()
