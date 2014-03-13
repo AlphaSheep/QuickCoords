@@ -28,7 +28,7 @@ Running or building this software from source requires a working installation of
 
 '''
 
-import sys 
+import sys
 import os
 
 from PyQt4.QtCore import Qt, QTimer
@@ -143,11 +143,19 @@ class CoordinateList():
         return -1
         
     
-    def copy(self):
+    def copyAsText(self):
         
         res = ''
         for p in self.points:
             res += str(p.x)+'\t'+str(p.y)+'\n'
+        return res.strip()
+
+
+    def copyAsCSV(self):
+        
+        res = ''
+        for p in self.points:
+            res += str(p.x)+', '+str(p.y)+'\n'
         return res.strip()
         
     
@@ -388,7 +396,7 @@ class ToolScreen(QtGui.QWidget):
     def selectFolder(self):
         
         fileDialog = QtGui.QFileDialog()
-        newPath = fileDialog.getExistingDirectory(None, "Select a folder with images", self.imagePath)
+        newPath = fileDialog.getExistingDirectory(self, "Select a folder with images", self.imagePath)
         self.setFoldertoPath(newPath)
 
         
@@ -412,12 +420,24 @@ class ToolScreen(QtGui.QWidget):
     
     def copyTable(self):
         
-        self.clipboard.setText(self.coordList.copy())
+        self.clipboard.setText(self.coordList.copyAsText())
 
 
     def exportTable(self):
         
+        fileDialog = QtGui.QFileDialog()
+        filters = 'CSV files (*.csv);;Text files (*.txt);;All files (*.*)'
+        exportLocation = fileDialog.getSaveFileName(self, "Choose file to export to", self.imagePath, filter=filters)
+        
+        exportFile = open(exportLocation, 'w')
+        exportFile.write(self.coordList.copyAsCSV())
+        exportFile.close()
+        
+        
+    def saveData(self):
+        
         pass
+         
 
 
     def clearTable(self):
