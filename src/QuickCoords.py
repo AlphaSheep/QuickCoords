@@ -41,8 +41,8 @@ from PyQt4 import QtGui
 
 supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
-forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_D, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal, Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight]
-backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_A, Qt.Key_J, Qt.Key_Minus, Qt.Key_ParenLeft, Qt.Key_BraceLeft, Qt.Key_BracketLeft]
+forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_X, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal, Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight]
+backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_Z, Qt.Key_J, Qt.Key_Minus, Qt.Key_ParenLeft, Qt.Key_BraceLeft, Qt.Key_BracketLeft]
 
 imageScaleFactor = 6
 
@@ -65,6 +65,23 @@ class Point():
         self.x = x
         self.y = y
         self.colour = 0
+        
+    
+    def shift(self, direction, amount):
+        
+        if direction == 'up':
+            self.y -= amount
+        elif direction == 'down':
+            self.y += amount
+        elif direction == 'left':
+            self.x -= amount
+        elif direction == 'right':
+            self.x += amount
+        if abs(self.x-round(self.x))<1e-8:
+            self.x = round(self.x)
+        if abs(self.y-round(self.y))<1e-8:
+            self.y = round(self.y)
+            
         
         
     def __str__(self):
@@ -141,6 +158,7 @@ class TableBox(QtGui.QTableWidget):
         event = args[0]
         if event.key() == Qt.Key_Delete:
             self.deleteSelectedRows()
+        self.toolScreen.keyPressEvent(event)
         
         return QtGui.QTableWidget.keyPressEvent(self, *args, **kwargs)
     
@@ -150,12 +168,10 @@ class TableBox(QtGui.QTableWidget):
         newCoordList = CoordinateList([])
         oldCoordList = self.toolScreen.coordList
 
-        selectedRows = []
-        for index in self.selectionModel().selectedRows():
-            selectedRows.append(index.row())
+        selectedPoints = self.getSelectedPoints()
         
         for i in range(self.rowCount()):
-            if not i in selectedRows:
+            if not i in selectedPoints:
                 newCoordList.addPoint(oldCoordList.points[i])
         self.toolScreen.coordList = newCoordList
         self.toolScreen.updatePoints()
@@ -163,13 +179,11 @@ class TableBox(QtGui.QTableWidget):
     
     def selectionChanged(self, *args, **kwargs):
         
-        selectedRows = []
-        for index in self.selectionModel().selectedRows():
-            selectedRows.append(index.row())
+        selectedPoints = self.getSelectedPoints()
         
         for i in range(self.toolScreen.coordList.length()):
-            print(i, self.rowCount(), len(self.toolScreen.coordList.points))
-            if i in selectedRows:
+            # print(i, self.rowCount(), len(self.toolScreen.coordList.points))
+            if i in selectedPoints:
                 self.toolScreen.coordList.points[i].colour = 1
             else:
                 self.toolScreen.coordList.points[i].colour = 0
@@ -177,6 +191,24 @@ class TableBox(QtGui.QTableWidget):
         self.toolScreen.drawImagePoints()
         
         return QtGui.QTableWidget.selectionChanged(self, *args, **kwargs)
+    
+    
+    def getSelectedPoints(self):
+        
+        selectedPoints = []
+        for index in self.selectionModel().selectedRows():
+            selectedPoints.append(index.row())
+        return selectedPoints
+            
+        
+    def setSelectedRows(self, rows):
+        
+        selectedItems = self.selectionModel().selection()
+        for i in rows:      
+            self.selectRow(i)      
+            selectedItems.merge(self.selectionModel().selection(), QtGui.QItemSelectionModel.Select)
+        self.clearSelection()
+        self.selectionModel().select(selectedItems, QtGui.QItemSelectionModel.Select)
 
 
 
@@ -208,7 +240,19 @@ class ToolScreen(QtGui.QWidget):
         if event.key() == Qt.Key_Backspace:
             self.coordList.removeLastPoint()
             self.updatePoints()
-        
+        if event.key() == Qt.Key_W:
+            self.shiftSelected('up')
+            self.updatePoints()
+        if event.key() == Qt.Key_A:
+            self.shiftSelected('left')
+            self.updatePoints()
+        if event.key() == Qt.Key_S:
+            self.shiftSelected('down')
+            self.updatePoints()
+        if event.key() == Qt.Key_D:
+            self.shiftSelected('right')
+            self.updatePoints()
+
         
     def initUI(self):
         
@@ -328,6 +372,13 @@ class ToolScreen(QtGui.QWidget):
         self.setImage()
     
 
+    def shiftSelected(self, direction):
+        
+        selectedPoints = self.table.getSelectedPoints()
+        for i in selectedPoints:
+            self.coordList.points[i].shift(direction, 1.0/imageScaleFactor)
+        
+
     def setImage(self):
         
         if len(self.imageList) > 0:
@@ -352,7 +403,9 @@ class ToolScreen(QtGui.QWidget):
         
         
     def updatePoints(self):
-        
+
+        selectedPoints = self.table.getSelectedPoints()
+        print(selectedPoints)
         points = self.coordList.points
         nPoints = len(points)
         self.table.clearContents()
@@ -364,7 +417,9 @@ class ToolScreen(QtGui.QWidget):
             yItem = QtGui.QTableWidgetItem('{:.1f}'.format(points[i].y))
             yItem.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             self.table.setItem(i, 1, yItem)
+        self.table.setSelectedRows(selectedPoints)
         self.drawImagePoints()
+        
             
             
     def drawImagePoints(self):
@@ -381,9 +436,16 @@ class ToolScreen(QtGui.QWidget):
                 colour = QtGui.qRgb(0, 255, 0)
             else:
                 colour = QtGui.qRgb(255, 0, 0)
+            borderColour = QtGui.qRgb(0, 0, 0)
             for x in range(left, right+1):
                 for y in range(top, bottom+1):    
                     newImage.setPixel(x, y, colour)
+            for x in range(left-1, right+2):
+                for y in [top-1, bottom+1]:    
+                    newImage.setPixel(x, y, borderColour)
+            for x in [left-1, right+1]:
+                for y in range(top-1, bottom+2):    
+                    newImage.setPixel(x, y, borderColour)
             
         self.image.convertFromImage(newImage)
         self.imageBlockScene.update()
