@@ -22,10 +22,12 @@ Keys
 ----
 
 * Arrow keys will scroll the image if it has focus.
-* D K + . ] and > move to the next image.
-* A J - , [ and < move to the previous image.
+* X K + . ] and > move to the next image.
+* Z J - , [ and < move to the previous image.
 * Clicking on the image will add the coordinates of that pixel to the list on the right.
 * Right clicking or Backspace will delete the last point on the list.
+* Click on a point to select it, or Ctrl+Click for multiple points.
+* W A S and D move the selected points around.
 * Delete will delete the selected points from the list.
 
 
