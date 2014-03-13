@@ -45,6 +45,7 @@ forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_X, Qt.Key_K, Qt.Key_Plus, Q
 backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_Z, Qt.Key_J, Qt.Key_Minus, Qt.Key_ParenLeft, Qt.Key_BraceLeft, Qt.Key_BracketLeft]
 
 imageScaleFactor = 6
+selectionRadius = 1
 
 outputColumnMinWidth = 160
 outputColumnMaxWidth = 640
@@ -128,6 +129,15 @@ class CoordinateList():
         else:
             self.points = self.points[:n] + self.points[n+1:]
         
+    
+    def getPointIndex(self, point):
+        
+        for i in range(self.length()):
+            p = self.points[i]
+            if abs(p.x - point.x) <= selectionRadius and abs(p.y - point.y) <= selectionRadius:
+                return i
+        return -1
+        
 
     def __str__(self):
          
@@ -144,11 +154,19 @@ class ClickableImageBox(QtGui.QGraphicsScene):
         event = args[0]
         if event.button() == Qt.LeftButton:
             point = Point(event.scenePos().x()/imageScaleFactor, event.scenePos().y()/imageScaleFactor)
-            self.parent().coordList.addPoint(point)
-            #self.parent().updatePoints()
+            nearPoint = self.parent().coordList.getPointIndex(point)
+            if nearPoint >= 0:
+                selectedPoints = self.parent().table.getSelectedPoints()
+                if not nearPoint in selectedPoints:
+                    selectedPoints.append(nearPoint)
+                else:
+                    selectedPoints.remove(nearPoint)
+                self.parent().table.setSelectedRows(selectedPoints)
+                
+            else:
+                self.parent().coordList.addPoint(point)
         if event.button() == Qt.RightButton:
             self.parent().coordList.removeLastPoint()
-            #self.parent().updatePoints()
 
         return QtGui.QGraphicsScene.mouseReleaseEvent(self, *args, **kwargs)
 
@@ -158,8 +176,6 @@ class TableBox(QtGui.QTableWidget):
     def keyPressEvent(self, *args, **kwargs):
         
         event = args[0]
-        if event.key() == Qt.Key_Delete:
-            self.deleteSelectedRows()
         self.toolScreen.keyPressEvent(event)
         
         return QtGui.QTableWidget.keyPressEvent(self, *args, **kwargs)
@@ -176,7 +192,7 @@ class TableBox(QtGui.QTableWidget):
             if not i in selectedPoints:
                 newCoordList.addPoint(oldCoordList.points[i])
         self.toolScreen.coordList = newCoordList
-        # self.toolScreen.updatePoints()
+        self.toolScreen.updatePoints()
         
     
     def selectionChanged(self, *args, **kwargs):
@@ -184,7 +200,6 @@ class TableBox(QtGui.QTableWidget):
         selectedPoints = self.getSelectedPoints()
         
         for i in range(self.toolScreen.coordList.length()):
-            # print(i, self.rowCount(), len(self.toolScreen.coordList.points))
             if i in selectedPoints:
                 self.toolScreen.coordList.points[i].colour = 1
             else:
@@ -203,11 +218,11 @@ class TableBox(QtGui.QTableWidget):
         
     def setSelectedRows(self, rows):
         
+        self.clearSelection()
         selectedItems = self.selectionModel().selection()
         for i in rows:      
             self.selectRow(i)      
             selectedItems.merge(self.selectionModel().selection(), QtGui.QItemSelectionModel.Select)
-        self.clearSelection()
         self.selectionModel().select(selectedItems, QtGui.QItemSelectionModel.Select)
 
 
@@ -249,6 +264,8 @@ class ToolScreen(QtGui.QWidget):
             self.prevImage()
         if event.key() == Qt.Key_Backspace:
             self.coordList.removeLastPoint()
+        if event.key() == Qt.Key_Delete:
+            self.table.deleteSelectedRows()
         if event.key() == Qt.Key_W:
             self.shiftSelected('up')
         if event.key() == Qt.Key_A:
@@ -352,7 +369,6 @@ class ToolScreen(QtGui.QWidget):
                 if extension in supportedExtensions:
                     self.imageList.append(self.imagePath + i)
             self.currentImageNum = 0
-            #print (self.imageList)
         
             self.setImage()
             self.fillListBox()
@@ -399,7 +415,6 @@ class ToolScreen(QtGui.QWidget):
             self.imageBlockScene.clear()
             self.imageBlockScene.setSceneRect(0, 0, width, height) 
             self.imageBlockScene.addPixmap(self.image)
-            #self.imageBlock.setPixmap(self.image)
             self.imageLabel.setText(currentImage.split('/')[-1])
             self.listBlock.setCurrentRow(self.currentImageNum)
             #self.updatePoints()
@@ -410,7 +425,6 @@ class ToolScreen(QtGui.QWidget):
     def updatePoints(self):
 
         selectedPoints = self.table.getSelectedPoints()
-        print(selectedPoints)
         points = self.coordList.points
         nPoints = len(points)
         self.table.clearContents()
