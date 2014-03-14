@@ -61,7 +61,6 @@ targetFPS = 30
 # Class definitions # 
 #===================#
 
-
 class Point():
     
     def __init__(self, x, y):
@@ -418,7 +417,7 @@ class ToolScreen(QtGui.QWidget):
     def setFoldertoPath(self, newPath):
         
         if len(newPath) > 0 and os.access(newPath, 0):
-            self.imagePath = newPath.replace('\\','/').strip('/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
+            self.imagePath = newPath.replace('\\','/').rstrip('/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
             self.imagePathLabel.setText(self.imagePath)
             fileList = os.listdir(self.imagePath)
             self.imageList = []
