@@ -330,7 +330,7 @@ class ToolScreen(QtGui.QWidget):
         self.imageBlock.setMinimumWidth(imageColumnMinWidth)
         
         folderButton = QtGui.QPushButton("Image folder:")
-        folderButton.setMaximumWidth(80)
+        folderButton.setMaximumWidth(180)
         folderButton.clicked.connect(self.selectFolder)
 
         tableCopyButton = QtGui.QPushButton("Copy")
