@@ -420,6 +420,7 @@ class ToolScreen(QtGui.QWidget):
             self.imagePath = newPath.replace('\\','/').rstrip('/')+'/' # Replace Windows' stupid file seperator with one that works on all platforms.
             self.imagePathLabel.setText(self.imagePath)
             fileList = os.listdir(self.imagePath)
+            fileList.sort()
             self.imageList = []
             for i in fileList:
                 extension = i.split('.')[-1]
