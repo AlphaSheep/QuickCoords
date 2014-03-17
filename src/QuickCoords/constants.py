@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-# coding: utf-8
 '''
+QuickCoords/constants.py
+
 QuickCoords is a simple tool for quickly and easily capturing a series of pixel 
 coordinates from a large number of images.
 
@@ -24,31 +24,27 @@ coordinates from a large number of images.
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
 
-Running or building this software from source requires a working installation of Python 3 and PyQt.
+This module defines some global constants.
 
 '''
 
-import sys
 
-from PyQt4 import QtGui
-
-from QuickCoords.main import ToolScreen
+from PyQt4.QtCore import Qt
 
 
-#===================#
-# Class definitions # 
-#===================#
+supportedExtensions = ['png', 'jpg', 'jpeg', 'bmp', 'gif']
 
+forwardKeys = [Qt.Key_Greater, Qt.Key_Period, Qt.Key_X, Qt.Key_K, Qt.Key_Plus, Qt.Key_Equal, Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight]
+backwardKeys = [Qt.Key_Less, Qt.Key_Comma, Qt.Key_Z, Qt.Key_J, Qt.Key_Minus, Qt.Key_ParenLeft, Qt.Key_BraceLeft, Qt.Key_BracketLeft]
 
-                   
-def main():
-    
-    app = QtGui.QApplication(sys.argv)
-    toolScreen = ToolScreen() #@UnusedVariable used to prevent prevent premature garbage collection
-    toolScreen.clipboard = app.clipboard()
-    print("!!!")
-    sys.exit(app.exec_())
-    
+imageScaleFactor = 6
+selectionRadius = 1
 
-if __name__ == '__main__':
-    main()
+outputColumnMinWidth = 160
+outputColumnMaxWidth = 6400
+outputColumnMinHeight = 160
+imageColumnMinWidth = 180
+
+folderSaveFileName = 'lastfolder.txt'
+
+targetFPS = 30

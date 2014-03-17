@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-# coding: utf-8
 '''
+QuickCoords/__init__.py
+
 QuickCoords is a simple tool for quickly and easily capturing a series of pixel 
 coordinates from a large number of images.
 
@@ -24,31 +24,6 @@ coordinates from a large number of images.
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
 
-Running or building this software from source requires a working installation of Python 3 and PyQt.
-
 '''
 
-import sys
-
-from PyQt4 import QtGui
-
-from QuickCoords.main import ToolScreen
-
-
-#===================#
-# Class definitions # 
-#===================#
-
-
-                   
-def main():
-    
-    app = QtGui.QApplication(sys.argv)
-    toolScreen = ToolScreen() #@UnusedVariable used to prevent prevent premature garbage collection
-    toolScreen.clipboard = app.clipboard()
-    print("!!!")
-    sys.exit(app.exec_())
-    
-
-if __name__ == '__main__':
-    main()
+# This is a dummy file to make the folder a package.
