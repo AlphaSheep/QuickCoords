@@ -394,14 +394,17 @@ class ToolScreen(QtGui.QWidget):
                 colour = QtGui.qRgb(255, 0, 0)
             borderColour = QtGui.qRgb(0, 0, 0)
             for x in range(left, right+1):
-                for y in range(top, bottom+1):    
-                    newImage.setPixel(x, y, colour)
+                for y in range(top, bottom+1):
+                    if x>0 and x<newImage.width() and y>0 and y<newImage.height():    
+                        newImage.setPixel(x, y, colour)
             for x in range(left-1, right+2):
                 for y in [top-1, bottom+1]:    
-                    newImage.setPixel(x, y, borderColour)
+                    if x>0 and x<newImage.width() and y>0 and y<newImage.height():    
+                        newImage.setPixel(x, y, borderColour)
             for x in [left-1, right+1]:
                 for y in range(top-1, bottom+2):    
-                    newImage.setPixel(x, y, borderColour)
+                    if x>0 and x<newImage.width() and y>0 and y<newImage.height():    
+                        newImage.setPixel(x, y, borderColour)
             
         self.image.convertFromImage(newImage)
         self.imageBlockScene.update()
