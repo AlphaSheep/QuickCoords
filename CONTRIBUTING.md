@@ -30,5 +30,5 @@ Please try to keep a consistent coding style.
 * Where possible, follow the Zen of Python (``` import this```).
 * Every function, class and module needs a docstring.
 
-You may contribute code by sending a pull request, or by posting code snippets to the issue tracker, or even just eail them to us.
+You may contribute code by sending a pull request, or by posting code snippets to the issue tracker, or even just email them to us.
 
